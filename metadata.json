@@ -1,0 +1,6 @@
+{
+  "name": "Terminal OS",
+  "description": "A lightweight multi-user web desktop OS simulation with built-in productivity tools and a flexible window manager.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

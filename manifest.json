@@ -1,0 +1,22 @@
+{
+  "name": "Browser OS",
+  "short_name": "BrowserOS",
+  "description": "Sistema web leve para terminais burros — 100% client-side, multiusuário",
+  "version": "1.0.0",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0a0e27",
+  "theme_color": "#0a0e27",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "pt-BR"
+}

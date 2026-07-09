@@ -385,6 +385,52 @@ function removeOfflineBanner() {
 // ============================================================
 // APPS REGISTRY
 // ============================================================
+
+// Helper: cria app que abre site externo num iframe
+function webApp(id, name, icon, color, url, w = 960, h = 620) {
+  return {
+    name, icon, color, width: w, height: h,
+    render: (win) => {
+      setTimeout(() => {
+        const iframe = win.querySelector('#wa-frame');
+        const input = win.querySelector('#wa-url');
+        const goBtn = win.querySelector('#wa-go');
+        const openBtn = win.querySelector('#wa-open');
+        const reloadBtn = win.querySelector('#wa-reload');
+        const goUrl = () => {
+          let u = input.value.trim();
+          if (!u) return;
+          if (!/^https?:\/\//.test(u)) {
+            u = 'https://' + u;
+            input.value = u;
+          }
+          try { iframe.src = u; } catch(e) {}
+        };
+        goBtn.addEventListener('click', goUrl);
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') goUrl(); });
+        openBtn.addEventListener('click', () => { if (input.value) window.open(input.value, '_blank'); });
+        reloadBtn.addEventListener('click', () => { iframe.src = iframe.src; });
+        // Pré-preencher e carregar
+        input.value = url;
+        iframe.src = url;
+      }, 50);
+      return `
+        <div class="browser-app">
+          <div class="browser-toolbar">
+            <button id="wa-reload" class="browser-go" style="background:#64748b;padding:10px 14px" title="Recarregar">↻</button>
+            <input id="wa-url" type="text" placeholder="https://exemplo.com" class="browser-input">
+            <button id="wa-go" class="browser-go">Ir</button>
+            <button id="wa-open" class="browser-go" style="background:#22c55e" title="Abrir em nova aba">↗</button>
+          </div>
+          <iframe id="wa-frame" class="browser-frame" src="about:blank"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
+          <p class="browser-note">Se o site não carregar, clique em ↗ para abrir em nova aba (alguns sites bloqueiam iframe).</p>
+        </div>
+      `;
+    }
+  };
+}
+
 const APPS = {
   welcome: {
     name: 'Bem-vindo', icon: '👋', color: '#3b82f6',
@@ -608,7 +654,59 @@ const APPS = {
       `;
     },
     onClose: (win) => { if (win._interval) clearInterval(win._interval); }
-  }
+  },
+
+  // ============================================================
+  // APPS EXTERNOS (sites em iframe)
+  // ============================================================
+  youtube: webApp('youtube', 'YouTube', '🎬', '#ff0000', 'https://www.youtube.com/'),
+  wikipedia: webApp('wikipedia', 'Wikipédia', '📚', '#000000', 'https://pt.wikipedia.org/'),
+  maps: webApp('maps', 'Google Maps', '🗺️', '#34a853', 'https://www.google.com/maps/'),
+  gmail: webApp('gmail', 'Gmail', '📧', '#ea4335', 'https://mail.google.com/mail/mu/mp/'),
+  chatgpt: webApp('chatgpt', 'ChatGPT', '🤖', '#10a37f', 'https://chat.openai.com/'),
+  gemini: webApp('gemini', 'Gemini', '✨', '#4285f4', 'https://gemini.google.com/app'),
+  claude: webApp('claude', 'Claude', '🎭', '#d97757', 'https://claude.ai/'),
+  perplexity: webApp('perplexity', 'Perplexity', '🔍', '#20808d', 'https://www.perplexity.ai/'),
+  translate: webApp('translate', 'Tradutor', '🌐', '#4285f4', 'https://translate.google.com/'),
+  weather: webApp('weather', 'Clima', '☀️', '#f59e0b', 'https://wttr.in/'),
+  calendar: webApp('calendar', 'Calendário', '📅', '#4285f4', 'https://calendar.google.com/calendar/gpadopt'),
+  drive: webApp('drive', 'Google Drive', '💾', '#1fa463', 'https://drive.google.com/'),
+  photos: webApp('photos', 'Fotos', '🖼️', '#ea4335', 'https://photos.google.com/'),
+  news: webApp('news', 'Notícias', '📰', '#4285f4', 'https://news.google.com/?hl=pt-BR&gl=BR'),
+  spotify: webApp('spotify', 'Spotify', '🎵', '#1db954', 'https://open.spotify.com/'),
+  radio: webApp('radio', 'Rádio', '📻', '#9333ea', 'https://www.radio-browser.info/'),
+  notion: webApp('notion', 'Notion', '📝', '#000000', 'https://www.notion.so/'),
+  office: webApp('office', 'Office Online', '📄', '#d83b01', 'https://www.office.com/launch'),
+  canva: webApp('canva', 'Canva', '🎨', '#00c4cc', 'https://www.canva.com/'),
+  github: webApp('github', 'GitHub', '🐙', '#181717', 'https://github.com/'),
+  stackoverflow: webApp('stackoverflow', 'Stack Overflow', '💬', '#f48024', 'https://pt.stackoverflow.com/'),
+  reddit: webApp('reddit', 'Reddit', '👽', '#ff4500', 'https://www.reddit.com/'),
+  whatsapp: webApp('whatsapp', 'WhatsApp', '💚', '#25d366', 'https://web.whatsapp.com/'),
+  telegram: webApp('telegram', 'Telegram', '✈️', '#0088cc', 'https://web.telegram.org/'),
+  messenger: webApp('messenger', 'Messenger', '💬', '#0084ff', 'https://www.messenger.com/'),
+  netflix: webApp('netflix', 'Netflix', '🍿', '#e50914', 'https://www.netflix.com/'),
+  twitch: webApp('twitch', 'Twitch', '🎮', '#9146ff', 'https://www.twitch.tv/'),
+  instagram: webApp('instagram', 'Instagram', '📷', '#e1306c', 'https://www.instagram.com/'),
+  x: webApp('x', 'X (Twitter)', '🐦', '#000000', 'https://x.com/'),
+  linkedin: webApp('linkedin', 'LinkedIn', '💼', '#0a66c2', 'https://www.linkedin.com/'),
+  amazon: webApp('amazon', 'Amazon', '📦', '#ff9900', 'https://www.amazon.com.br/'),
+  mercadolivre: webApp('mercadolivre', 'Mercado Livre', '🛒', '#ffe600', 'https://www.mercadolivre.com.br/'),
+  calculatorweb: webApp('calculatorweb', 'Calculadora Científica', '🔢', '#3b82f6', 'https://www.desmos.com/scientific?lang=pt-BR'),
+  paint: webApp('paint', 'Paint', '🖌️', '#ec4899', 'https://jspaint.app/'),
+  pdfreader: webApp('pdfreader', 'Leitor PDF', '📕', '#ef4444', 'https://mozilla.github.io/pdf.js/web/viewer.html'),
+  markdown: webApp('markdown', 'Editor Markdown', '⬇️', '#64748b', 'https://stackedit.io/app'),
+  codesandbox: webApp('codesandbox', 'CodeSandbox', '💻', '#040404', 'https://codesandbox.io/'),
+  replit: webApp('replit', 'Replit', '🔁', '#f26207', 'https://replit.com/'),
+  tide: webApp('tide', 'Tide (docs)', '🌊', '#0073e6', 'https://tideapp.com/'),
+  weather2: webApp('weather2', 'Previsão 7 dias', '🌤️', '#0ea5e9', 'https://www.climatempo.com.br/'),
+  bus: webApp('bus', 'Ônibus SP', '🚌', '#dc2626', 'https://www.sptrans.com.br/'),
+  bank: webApp('bank', 'Banco do Brasil', '🏦', '#ffcc00', 'https://www.bb.com.br/'),
+  nubank: webApp('nubank', 'Nubank', '💜', '#820ad1', 'https://app.nubank.com.br/'),
+  corona: webApp('corona', 'COVID Dados', '🦠', '#10b981', 'https://covid.saude.gov.br/'),
+  dictionary: webApp('dictionary', 'Dicionário', '📖', '#0ea5e9', 'https://www.dicio.com.br/'),
+  cep: webApp('cep', 'Busca CEP', '📮', '#16a34a', 'https://buscacepinter.correios.com.br/'),
+  recipes: webApp('recipes', 'Receitas', '🍳', '#f97316', 'https://www.tudogostoso.com.br/'),
+  traffic: webApp('traffic', 'Trânsito', '🚦', '#ef4444', 'https://www.google.com/maps/@-23.5489,-46.6388,11z/data=!5m1!1e1')
 };
 
 // ============================================================
@@ -756,7 +854,12 @@ function renderAppsMenu(filter = '') {
 function renderDesktopIcons() {
   const container = $('desktop-icons');
   if (!container) return;
-  const desktopApps = ['welcome', 'browser', 'notes', 'calculator', 'terminal', 'settings', 'clock'];
+  // Apps principais no desktop + alguns apps externos populares
+  const desktopApps = [
+    'welcome', 'browser', 'notes', 'calculator', 'terminal', 'settings', 'clock',
+    'youtube', 'gmail', 'chatgpt', 'maps', 'wikipedia', 'translate', 'whatsapp',
+    'spotify', 'netflix', 'news', 'weather', 'instagram', 'paint'
+  ];
   container.innerHTML = desktopApps.map(k => {
     const v = APPS[k];
     return `

@@ -9,15 +9,35 @@
 // ===== CONFIG =====
 const CONFIG = {
   appName: 'Browser OS',
-  version: '1.0.0',
-  users: [
-    { username: 'admin', password: 'admin', name: 'Administrador', role: 'admin' },
-    { username: 'user',  password: 'user',  name: 'Usuário',       role: 'user'  },
-    { username: 'guest', password: '',      name: 'Convidado',      role: 'guest' }
+  version: '1.1.0',
+  // Usuários padrão (sempre presentes). Usuários cadastrados são adicionados via localStorage.
+  defaultUsers: [
+    { username: 'admin', password: 'admin', name: 'Administrador', role: 'admin', builtin: true },
+    { username: 'user',  password: 'user',  name: 'Usuário',       role: 'user',  builtin: true },
+    { username: 'guest', password: '',      name: 'Convidado',      role: 'guest', builtin: true }
   ],
   sessionKey: 'browseros_session',
+  usersKey: 'browseros_users',  // usuários cadastrados persistem aqui
   storagePrefix: 'browseros_'
 };
+
+// Retorna usuários padrão + cadastrados
+function getAllUsers() {
+  const custom = JSON.parse(localStorage.getItem(CONFIG.usersKey) || '[]');
+  return [...CONFIG.defaultUsers, ...custom];
+}
+
+// Salva um novo usuário cadastrado
+function saveCustomUser(user) {
+  const custom = JSON.parse(localStorage.getItem(CONFIG.usersKey) || '[]');
+  custom.push(user);
+  localStorage.setItem(CONFIG.usersKey, JSON.stringify(custom));
+}
+
+// Verifica se username já existe
+function userExists(username) {
+  return getAllUsers().some(u => u.username.toLowerCase() === username.toLowerCase());
+}
 
 // ===== STATE =====
 const state = {
@@ -45,7 +65,7 @@ const el = (tag, props = {}, children = []) => {
 };
 
 // ============================================================
-// LOGIN SCREEN
+// LOGIN SCREEN (com opção de cadastro)
 // ============================================================
 function renderLogin() {
   app.innerHTML = '';
@@ -60,6 +80,7 @@ function renderLogin() {
     </div>
     <h1 class="login-title">${CONFIG.appName}</h1>
     <p class="login-subtitle">Sistema Web · Multiusuário</p>
+
     <form id="login-form" class="login-form">
       <div class="input-group">
         <input type="text" id="username" placeholder=" " autocomplete="username" required autofocus>
@@ -72,7 +93,10 @@ function renderLogin() {
       <button type="submit" class="btn-primary">Entrar</button>
       <p class="login-hint">Dica: admin / admin &nbsp;·&nbsp; user / user &nbsp;·&nbsp; guest</p>
       <p class="login-error" id="login-error"></p>
+      <div class="login-divider"><span>ou</span></div>
+      <button type="button" id="show-register-btn" class="btn-link">Criar nova conta</button>
     </form>
+
     <div class="login-footer">
       ${CONFIG.appName} v${CONFIG.version} &nbsp;·&nbsp; ${navigator.platform}
     </div>
@@ -84,7 +108,7 @@ function renderLogin() {
     e.preventDefault();
     const username = $('username').value.trim();
     const password = $('password').value;
-    const user = CONFIG.users.find(u => u.username === username && u.password === password);
+    const user = getAllUsers().find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
     const errorEl = $('login-error');
     if (!user) {
       errorEl.textContent = 'Usuário ou senha inválidos';
@@ -94,6 +118,84 @@ function renderLogin() {
     localStorage.setItem(CONFIG.sessionKey, JSON.stringify({ username: user.username, start: Date.now() }));
     renderDesktop();
   });
+
+  $('show-register-btn').addEventListener('click', renderRegister);
+}
+
+// ============================================================
+// REGISTER SCREEN (criar nova conta)
+// ============================================================
+function renderRegister() {
+  app.innerHTML = '';
+  const card = el('div', { className: 'login-card' });
+  card.innerHTML = `
+    <div class="login-logo" style="background: linear-gradient(135deg, #22c55e, #10b981); box-shadow: 0 8px 32px rgba(34, 197, 94, 0.3);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="8.5" cy="7" r="4"/>
+        <line x1="20" y1="8" x2="20" y2="14"/>
+        <line x1="23" y1="11" x2="17" y2="11"/>
+      </svg>
+    </div>
+    <h1 class="login-title" style="background: linear-gradient(135deg, #22c55e, #10b981); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Criar Conta</h1>
+    <p class="login-subtitle">Cadastre-se para acessar o sistema</p>
+
+    <form id="register-form" class="login-form">
+      <div class="input-group">
+        <input type="text" id="reg-name" placeholder=" " required autofocus>
+        <label>Nome completo</label>
+      </div>
+      <div class="input-group">
+        <input type="text" id="reg-username" placeholder=" " required>
+        <label>Usuário (login)</label>
+      </div>
+      <div class="input-group">
+        <input type="password" id="reg-password" placeholder=" " required minlength="4">
+        <label>Senha (mín. 4 caracteres)</label>
+      </div>
+      <div class="input-group">
+        <input type="password" id="reg-password2" placeholder=" " required>
+        <label>Confirmar senha</label>
+      </div>
+      <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #22c55e, #10b981);">Criar conta</button>
+      <p class="login-error" id="register-error"></p>
+      <div class="login-divider"><span>ou</span></div>
+      <button type="button" id="back-to-login-btn" class="btn-link">Voltar para login</button>
+    </form>
+
+    <div class="login-footer">
+      ${CONFIG.appName} v${CONFIG.version}
+    </div>
+  `;
+  const screen = el('div', { className: 'login-screen' }, [card]);
+  app.appendChild(screen);
+
+  $('register-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = $('reg-name').value.trim();
+    const username = $('reg-username').value.trim();
+    const password = $('reg-password').value;
+    const password2 = $('reg-password2').value;
+    const errorEl = $('register-error');
+
+    if (name.length < 2) { errorEl.textContent = 'Nome muito curto'; return; }
+    if (username.length < 3) { errorEl.textContent = 'Usuário deve ter pelo menos 3 caracteres'; return; }
+    if (!/^[a-zA-Z0-9_.-]+$/.test(username)) { errorEl.textContent = 'Usuário só pode ter letras, números, _, . e -'; return; }
+    if (password.length < 4) { errorEl.textContent = 'Senha deve ter pelo menos 4 caracteres'; return; }
+    if (password !== password2) { errorEl.textContent = 'As senhas não conferem'; return; }
+    if (userExists(username)) { errorEl.textContent = 'Este usuário já existe'; return; }
+
+    // Salva
+    const newUser = { username, password, name, role: 'user', builtin: false, created: new Date().toISOString() };
+    saveCustomUser(newUser);
+
+    // Login automático
+    state.currentUser = newUser;
+    localStorage.setItem(CONFIG.sessionKey, JSON.stringify({ username: newUser.username, start: Date.now() }));
+    renderDesktop();
+  });
+
+  $('back-to-login-btn').addEventListener('click', renderLogin);
 }
 
 // ============================================================
@@ -683,7 +785,7 @@ function init() {
   if (saved) {
     try {
       const data = JSON.parse(saved);
-      const user = CONFIG.users.find(u => u.username === data.username);
+      const user = getAllUsers().find(u => u.username.toLowerCase() === data.username.toLowerCase());
       if (user) {
         state.currentUser = user;
         state.sessionStart = data.start || Date.now();
